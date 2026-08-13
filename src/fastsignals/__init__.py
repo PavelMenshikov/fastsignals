@@ -1,0 +1,1 @@
+"""FastSignals Telegram bot package."""

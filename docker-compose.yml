@@ -1,0 +1,10 @@
+services:
+  fastsignals:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - fastsignals-data:/data
+
+volumes:
+  fastsignals-data:
