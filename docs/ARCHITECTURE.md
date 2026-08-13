@@ -185,3 +185,46 @@ Telegram is not required in the live automated path.
 5. **Backtesting and dashboards**: user and admin dashboards over journal data.
 6. **ML/anomaly layer**: Isolation Forest first, supervised model only after enough paper/live outcomes exist.
 7. **Live execution**: non-custodial transaction preparation first; automated delegated/session signing only as explicit opt-in.
+
+## Trading mode control plane
+
+FastSignals has a centralized `TradingModeService` and `ExecutionPolicy`; Telegram only calls this service and never decides execution by button text.
+
+Runtime mode and process status are separate:
+
+```text
+TradingMode:   OFF | MANUAL | PAPER | AUTO
+TradingStatus: STOPPED | STARTING | RUNNING | STOPPING | ERROR | EMERGENCY_STOPPED
+```
+
+Safety defaults after every process start are:
+
+```text
+mode = MANUAL
+status = STOPPED
+paper_status = STOPPED
+auto = disabled
+```
+
+AUTO is never restored automatically after restart. It requires explicit confirmation.
+
+### Execution policy
+
+`ExecutionPolicy` is the only place that maps an opportunity to an execution action:
+
+```text
+OFF    → reject
+MANUAL → prepare transaction for user confirmation
+PAPER  → simulate transaction with a virtual wallet
+AUTO   → execute through the live adapter
+```
+
+Before AUTO execution, deterministic safety gates must pass: executable route, security, risk, quote freshness, opportunity TTL, position limits, concurrent limits and AUTO-specific limits. ML may add ranking/confidence, but it cannot bypass these checks.
+
+### Mode-dependent signal UI
+
+- MANUAL: show `EXECUTE ARBITRAGE` plus manual route actions.
+- PAPER: show paper execution status only; no real BUY/SELL actions.
+- AUTO: show automatic execution status and a `MANUAL` action; no per-signal BUY/SELL buttons.
+
+Each execution decision records a mode/status snapshot so switching AUTO → MANUAL affects only new opportunities and does not corrupt already executing lifecycle records.
